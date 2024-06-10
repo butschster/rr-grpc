@@ -81,6 +81,8 @@ func (p *Plugin) interceptor(ctx context.Context, req any, info *grpc.UnaryServe
 	p.queueSize.Inc()
 
 	resp, err := handler(ctx, req)
+	
+	p.log.Debug("response was returned successfully", zap.String("method", info.FullMethod), zap.Time("start", start), zap.Int64("response", time.Since(start).Milliseconds()))
 
 	s, ok := status.FromError(err)
 	var statusCode codes.Code
@@ -90,6 +92,10 @@ func (p *Plugin) interceptor(ctx context.Context, req any, info *grpc.UnaryServe
 	case false:
 		statusCode = status.New(codes.Unknown, err.Error()).Code()
 	}
+
+	
+	p.log.Debug("before def", zap.String("method", info.FullMethod), zap.Time("start", start), zap.Int64("def", time.Since(start).Milliseconds()))
+
 
 	defer func() {
 		p.requestCounter.WithLabelValues(info.FullMethod, statusCode.String()).Inc()
